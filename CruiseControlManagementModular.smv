@@ -1,0 +1,424 @@
+MODULE main
+
+VAR
+
+--modulos da VF
+	BCM: BCM(SET, SCGND, SCVBAT, ColumnSwitchUP, ColumnSwitchDOWN, ColumnSwitchResume, VehicleSpeed, BrakePedalSts, ClutchSwitch);
+
+--variaveis de entrada da VF
+	SET: boolean;
+	SCGND: boolean;
+	SCVBAT: boolean;
+	ColumnSwitchResume: boolean;
+	ColumnSwitchDOWN: boolean;
+	ColumnSwitchUP: boolean;
+	VehicleSpeed: -1..200;
+	--variaveis da VF056
+		BrakePedalSts: boolean;
+	--variaveis da VF240
+		ClutchSwitch: boolean;
+		
+--============================================================================================= ESPECIFICACOES ========================================================================================================
+ ------------------------------------------------------Vvehicle--------------------------------------------------------------------
+ 
+	SPEC AF ((BCM.ECM.Vvehicle > 30 | BCM.ECM.Vvehicle < 180) & SCGND & SCVBAT = TRUE -> AF BCM.ECM.Vvehicle = VehicleSpeed)
+	SPEC AF (BCM.ECM.Vvehicle = 30 & SCGND & SCVBAT = TRUE -> AF BCM.ECM.Vvehicle = VehicleSpeed)
+	SPEC AF (BCM.ECM.Vvehicle = 180 & SCGND & SCVBAT = TRUE -> AF BCM.ECM.Vvehicle = VehicleSpeed)
+	SPEC AF (!BCM.ECM.CCL & SCGND & SCVBAT = TRUE -> AF BCM.ECM.Vvehicle = VehicleSpeed)
+	
+	SPEC AF ((BCM.ECM.Vvehicle > 30 | BCM.ECM.Vvehicle < 180) & ClutchSwitch & BrakePedalSts = TRUE -> AF BCM.ECM.Vvehicle = VehicleSpeed)
+	SPEC AF (BCM.ECM.Vvehicle = 30 & ClutchSwitch & BrakePedalSts = TRUE -> AF BCM.ECM.Vvehicle = VehicleSpeed)
+	SPEC AF (BCM.ECM.Vvehicle = 180 & ClutchSwitch & BrakePedalSts = TRUE -> AF BCM.ECM.Vvehicle = VehicleSpeed)
+	SPEC AF (!BCM.ECM.CCL & ClutchSwitch & BrakePedalSts = TRUE -> AF BCM.ECM.Vvehicle = VehicleSpeed)
+	
+	SPEC AF ((BCM.ECM.Vvehicle > 30 | BCM.ECM.Vvehicle < 180) & BCM.UP = TRUE -> AF BCM.ECM.Vvehicle = (BCM.ECM.Vvehicle + 1))
+	SPEC AF (BCM.ECM.Vvehicle = 30 & BCM.UP = TRUE -> AF BCM.ECM.Vvehicle = (BCM.ECM.Vvehicle + 1))
+	SPEC AG (BCM.ECM.Vvehicle = 180 & BCM.UP = TRUE -> AF BCM.ECM.Vvehicle = BCM.ECM.Vvehicle)
+	SPEC AF (!BCM.ECM.CCL & BCM.UP = TRUE -> AF BCM.ECM.Vvehicle = VehicleSpeed)
+	
+	SPEC AF ((BCM.ECM.Vvehicle > 30 | BCM.ECM.Vvehicle < 180) & BCM.DOWN = TRUE -> AF BCM.ECM.Vvehicle = (BCM.ECM.Vvehicle - 1))
+	SPEC AG (BCM.ECM.Vvehicle = 30 & BCM.DOWN = TRUE -> AF BCM.ECM.Vvehicle = BCM.ECM.Vvehicle)
+	SPEC AF (BCM.ECM.Vvehicle = 180 & BCM.DOWN = TRUE -> AF BCM.ECM.Vvehicle = (BCM.ECM.Vvehicle - 1))
+	SPEC AF (!BCM.ECM.CCL & BCM.DOWN = TRUE -> AF BCM.ECM.Vvehicle = VehicleSpeed)
+	
+	SPEC AF ((BCM.ECM.Vvehicle > 30 | BCM.ECM.Vvehicle < 180) & BCM.RESUME = TRUE -> AF BCM.ECM.Vvehicle = BCM.ECM.Vset)
+	SPEC AF (BCM.ECM.Vvehicle = 30 & BCM.RESUME = TRUE -> AF BCM.ECM.Vvehicle = BCM.ECM.Vset)
+	SPEC AF (BCM.ECM.Vvehicle = 180 & BCM.RESUME = TRUE -> AF BCM.ECM.Vvehicle = BCM.ECM.Vset)
+	SPEC AF (!BCM.ECM.CCL & BCM.RESUME = TRUE -> AF BCM.ECM.Vvehicle = VehicleSpeed)	
+	
+------------------------------------------------------CCL--------------------------------------------------------------------
+--NAO FOI TESTADO COM AG
+
+	SPEC AF ((BCM.ECM.Vvehicle > 30 | BCM.ECM.Vvehicle < 180) & SCGND & SCVBAT = TRUE -> AF BCM.ECM.CCL = TRUE)
+	SPEC AF ((BCM.ECM.Vvehicle > 30 | BCM.ECM.Vvehicle < 180) & ClutchSwitch & BrakePedalSts = TRUE -> AF BCM.ECM.CCL = TRUE)
+	SPEC AF ((BCM.ECM.Vvehicle > 30 | BCM.ECM.Vvehicle < 180) & BCM.UP = TRUE -> AF BCM.ECM.CCL = FALSE)
+	SPEC AF ((BCM.ECM.Vvehicle > 30 | BCM.ECM.Vvehicle < 180) & BCM.DOWN = TRUE -> AF BCM.ECM.CCL = FALSE)
+	SPEC AF ((BCM.ECM.Vvehicle > 30 | BCM.ECM.Vvehicle < 180) & BCM.RESUME = TRUE -> AF BCM.ECM.CCL = FALSE)
+
+	SPEC AF ((BCM.ECM.Vvehicle < 30 | BCM.ECM.Vvehicle > 180) & SCGND & SCVBAT = TRUE -> !(AF BCM.ECM.CCL = TRUE))
+	SPEC AF ((BCM.ECM.Vvehicle < 30 | BCM.ECM.Vvehicle > 180) & ClutchSwitch & BrakePedalSts = TRUE -> !(AF BCM.ECM.CCL = TRUE))
+	SPEC AF ((BCM.ECM.Vvehicle < 30 | BCM.ECM.Vvehicle > 180) & BCM.UP = TRUE -> !(AF BCM.ECM.CCL = TRUE))
+	SPEC AF ((BCM.ECM.Vvehicle < 30 | BCM.ECM.Vvehicle > 180) & BCM.DOWN = TRUE -> !(AF BCM.ECM.CCL = TRUE))
+	SPEC AF ((BCM.ECM.Vvehicle < 30 | BCM.ECM.Vvehicle > 180) & BCM.RESUME = TRUE -> !(AF BCM.ECM.CCL = TRUE))
+
+--====================================================== BCM =======================================================================
+
+MODULE  BCM(SET, SCGND, SCVBAT, ColumnSwitchUP, ColumnSwitchDOWN, ColumnSwitchResume, VehicleSpeed, BrakePedalSts, ClutchSwitch)
+
+VAR	
+	
+--======================================================VARIAVEIS_BCM=======================================================================
+--modulos da VF
+	ECM: ECM(CCOOS, SSC, AS, DS, RSC, CCFS, CCVD, ClutchSwitch, BrakePedalSts, VehicleSpeed);
+	BCMMsgCounter: BCMMsgCounter(CCOOS, SSC, AS, DS, RSC, CCFS, CCVD);
+
+--estados da VF
+	estados_BCM: {OFF, ON, RESUME_V, RESUME_D, FAULT, DISABLED, DOWN_P, DOWN_C, UP_P, UP_C};
+	
+--variaveis de saida
+	CCOOS: boolean;
+	SSC: boolean;
+	AS: boolean;
+	DS: boolean;
+	RSC: boolean;
+	CCFS: boolean;
+	CCVD: boolean;
+--variaveis de entrada
+	TURN_ON: boolean;
+	TURN_OFF: boolean;
+	SC_GND: boolean;
+	SC_VBAT: boolean;
+	RESUME: boolean;
+	UP: boolean;
+	DOWN: boolean;
+	STANDBY: boolean;
+	ACTIVE: boolean;
+
+--============================================================TRANSICOES DO MODELO BCM==========================================================
+ASSIGN
+
+	init(estados_BCM):=OFF;
+	
+	next(estados_BCM):= case
+						(estados_BCM = OFF) & (TURN_ON) & (STANDBY) = TRUE : ON;
+						(estados_BCM = OFF) & (TURN_ON) & (ACTIVE) = TRUE : DISABLED;
+						(estados_BCM = OFF) & (SC_GND | SC_VBAT) = TRUE : FAULT;
+						(estados_BCM = ON) & (TURN_OFF) = TRUE : OFF;
+						(estados_BCM = ON) & (SC_GND | SC_VBAT) = TRUE : FAULT;
+						(estados_BCM = ON) & (TURN_ON) & (!RESUME) = TRUE : RESUME_D;
+						(estados_BCM = ON) & (TURN_ON) & (UP) = TRUE : UP_P;
+						(estados_BCM = ON) & (TURN_OFF) & (DOWN) = TRUE : DOWN_P;
+						(estados_BCM = DISABLED) & TURN_OFF = TRUE : OFF;
+						(estados_BCM = DISABLED) & (SC_GND | SC_VBAT) = TRUE : FAULT;
+						(estados_BCM = FAULT) & (TURN_OFF) = TRUE : FAULT;
+						(estados_BCM = RESUME_V) = TRUE : ON; --??
+						(estados_BCM = RESUME_D) = TRUE : RESUME_V;
+						(estados_BCM = RESUME_D) = TRUE : DISABLED; -- & et > 120
+						(estados_BCM = RESUME_D) & (SC_GND | SC_VBAT) = TRUE : FAULT;
+						(estados_BCM = UP_C) & (SC_GND | SC_VBAT) = TRUE : FAULT;
+						(estados_BCM = UP_C) = TRUE : DISABLED; -- & et > 120
+						(estados_BCM = UP_C) & !(UP) = TRUE : ON;
+						(estados_BCM = UP_P) = TRUE : UP_C;
+						(estados_BCM = DOWN_P) = TRUE : DOWN_C;
+						(estados_BCM = DOWN_C) = TRUE : DISABLED; 
+						(estados_BCM = DOWN_C) & (SC_GND | SC_VBAT) = TRUE : FAULT;
+						(estados_BCM = DOWN_C) & !(DOWN) = TRUE : ON;
+						TRUE: estados_BCM;
+					esac;
+
+--TRANSICOES DAS VARIAVEIS DE ENTRADA
+	
+	next(SCGND):= case
+						(SCGND) = TRUE : TRUE;
+						!(SCGND) = TRUE : FALSE;
+						TRUE: SCGND;
+					esac;
+
+	next(SCVBAT):= case
+						(SCVBAT) = TRUE : TRUE;
+						!(SCVBAT) = TRUE : FALSE;
+						TRUE: SCVBAT;
+					esac;					
+
+	next(TURN_ON):= case
+						(SET) = TRUE : TRUE;
+						!(SET) = TRUE : FALSE;
+						TRUE: TURN_ON;
+					esac;
+					
+	next(TURN_OFF):= case
+						(SET) = TRUE : FALSE;
+						!(SET) = TRUE : TRUE;
+						TRUE: TURN_ON;
+					esac;
+					
+	next(STANDBY):= case
+						!(ColumnSwitchResume & ColumnSwitchDOWN & ColumnSwitchUP) = TRUE : TRUE;
+						(ColumnSwitchResume & ColumnSwitchDOWN & ColumnSwitchUP) = TRUE : FALSE;
+						TRUE: STANDBY;
+					esac;
+					
+	next(ACTIVE):= case
+						!(ColumnSwitchResume & ColumnSwitchDOWN & ColumnSwitchUP) = TRUE : FALSE;
+						(ColumnSwitchResume & ColumnSwitchDOWN & ColumnSwitchUP) = TRUE : TRUE;
+						TRUE: ACTIVE;
+					esac;
+					
+--TRANSICOES DAS VARIAVEIS DE SAIDA
+	next(CCOOS):= case
+					(estados_BCM = ON) | (estados_BCM = RESUME_V) | (estados_BCM = RESUME_D) | (estados_BCM = UP_C) | (estados_BCM = UP_P) | (estados_BCM = DOWN_C) | (estados_BCM = DOWN_P) = TRUE : TRUE;
+					(estados_BCM = DISABLED) | (estados_BCM = FAULT) | (estados_BCM = OFF) = TRUE : FALSE;
+					TRUE: CCOOS;
+				esac;
+	
+	next(SSC):= case
+					(estados_BCM = DOWN_C) | (estados_BCM = DOWN_P) | (estados_BCM = UP_P) = TRUE : TRUE;
+					(estados_BCM = OFF) | (estados_BCM = ON) | (estados_BCM = FAULT) | (estados_BCM = DISABLED) | (estados_BCM = RESUME_D) | (estados_BCM = RESUME_V) | (estados_BCM = UP_C) = TRUE : FALSE;
+					TRUE: SSC;
+				esac;
+	
+	next(AS):= case
+					(estados_BCM = UP_P) | (estados_BCM = UP_C) = TRUE : TRUE;
+					(estados_BCM = ON) | (estados_BCM = OFF) | (estados_BCM = FAULT) | (estados_BCM = DISABLED) | (estados_BCM = DOWN_C) | (estados_BCM = DOWN_P) | (estados_BCM = RESUME_D) | (estados_BCM = RESUME_V) = TRUE : FALSE;
+					TRUE: AS;
+				esac;
+	
+	next(DS):= case
+					(estados_BCM = DOWN_P) | (estados_BCM = DOWN_C) = TRUE : TRUE;
+					(estados_BCM = ON) | (estados_BCM = OFF) | (estados_BCM = FAULT) | (estados_BCM = DISABLED) | (estados_BCM = UP_C) | (estados_BCM = UP_P) | (estados_BCM = RESUME_D) | (estados_BCM = RESUME_V) = TRUE : FALSE;
+					TRUE: DS;
+				esac;
+				
+	next(RSC):= case
+					(estados_BCM = RESUME_V) = TRUE : TRUE;
+					(estados_BCM = ON) | (estados_BCM = OFF) | (estados_BCM = FAULT) | (estados_BCM = DISABLED) | (estados_BCM = UP_C) | (estados_BCM = UP_P) | (estados_BCM = RESUME_D) | (estados_BCM = DOWN_C) | (estados_BCM = DOWN_P) = TRUE : FALSE;
+					TRUE: RSC;
+				esac;
+	
+	next(CCFS):= case
+					(estados_BCM = FAULT) = TRUE : TRUE;
+					(estados_BCM = ON) | (estados_BCM = OFF) | (estados_BCM = RESUME_V)| (estados_BCM = DISABLED) | (estados_BCM = UP_C) | (estados_BCM = UP_P) | (estados_BCM = RESUME_D) | (estados_BCM = DOWN_C) | (estados_BCM = DOWN_P) = TRUE : FALSE;
+					TRUE: CCFS;
+				esac;
+	
+	next(CCVD):= case
+					(estados_BCM = DISABLED) = TRUE : TRUE;
+					(estados_BCM = ON) | (estados_BCM = OFF) | (estados_BCM = RESUME_V) | (estados_BCM = FAULT) | (estados_BCM = UP_C) | (estados_BCM = UP_P) | (estados_BCM = RESUME_D) | (estados_BCM = DOWN_C) | (estados_BCM = DOWN_P) = TRUE : FALSE;
+					TRUE: CCVD;
+				esac;
+
+--====================================================== BCMMsgCounter =======================================================================
+
+MODULE  BCMMsgCounter(CCOOS, SSC, AS, DS, RSC, CCFS, CCVD)
+
+VAR	
+
+--======================================================VARIAVEIS_BCMMsgCounter=======================================================================
+
+	estado_MsgCounter: {INICIA, SOMA, REGISTRA, COMPARANDO};
+--variaveis internas
+	ASant: boolean;
+	CCFSant: boolean;
+	CCOOSant: boolean;
+	DSant: boolean;
+	RSCant: boolean;
+	SSCant: boolean;
+	CCVDant: boolean;
+	counter: boolean;
+	reset: boolean;
+--variaveis de saida
+	Msgcounter: -1..4;
+	
+--=================================================TRANSICOES DO MODELO BCMMsgCounter==========================================================
+ASSIGN
+
+	init(estado_MsgCounter):= INICIA;
+
+	next(estado_MsgCounter):= case
+						(estado_MsgCounter = INICIA) = TRUE : REGISTRA;
+						(estado_MsgCounter = REGISTRA) = TRUE : COMPARANDO;
+						(estado_MsgCounter = COMPARANDO) & (reset) = TRUE : INICIA;
+						(estado_MsgCounter = COMPARANDO) & (counter) = TRUE : SOMA;
+						(estado_MsgCounter = COMPARANDO) & (!counter) = TRUE : COMPARANDO;
+						(estado_MsgCounter = SOMA) & (Msgcounter>3) = TRUE : INICIA;
+						(estado_MsgCounter = SOMA) & (reset) = TRUE : REGISTRA;
+						TRUE: estado_MsgCounter;
+				   esac;
+				   
+--TRANSICOES DAS VARIAVEIS DE SAIDA
+	next(Msgcounter):= case
+							(estado_MsgCounter = INICIA) = TRUE : 0;
+							(estado_MsgCounter = SOMA) = TRUE : (Msgcounter + 1) mod 5;
+							TRUE: Msgcounter;
+						esac;
+						
+	next(counter):= case
+					(estado_MsgCounter = COMPARANDO) & (CCOOSant = CCOOS) & (SSCant = SSC) & (ASant = AS) & (DSant = DS) & (RSCant = RSC) & (CCFSant = CCFS) & (CCVDant = CCVDant) = TRUE : FALSE;
+					(estado_MsgCounter = COMPARANDO) & (CCOOSant != CCOOS) & (SSCant != SSC) & (ASant != AS) & (DSant != DS) & (RSCant != RSC) & (CCFSant != CCFS) & (CCVDant != CCVDant) = TRUE : TRUE;
+					(estado_MsgCounter = REGISTRA) = TRUE : FALSE;
+					TRUE: counter;
+				  esac;
+				  
+	next(CCOOSant):= case
+						(estado_MsgCounter = REGISTRA) = TRUE : CCOOS;
+						TRUE: CCOOSant;
+					 esac;
+					 
+	next(SSCant):= case
+						(estado_MsgCounter = REGISTRA) = TRUE : SSC;
+						TRUE: SSCant;
+					 esac;
+					 
+	next(ASant):= case
+						(estado_MsgCounter = REGISTRA) = TRUE : AS;
+						TRUE: ASant;
+					 esac;
+		
+	next(DSant):= case
+						(estado_MsgCounter = REGISTRA) = TRUE : DS;
+						TRUE: DSant;
+					 esac;
+					 
+	next(RSCant):= case
+						(estado_MsgCounter = REGISTRA) = TRUE : RSC;
+						TRUE: RSCant;
+					 esac;
+			
+	next(CCFSant):= case
+						(estado_MsgCounter = REGISTRA) = TRUE : CCFS;
+						TRUE: CCFSant;
+					 esac;
+					 
+	next(CCVDant):= case
+						(estado_MsgCounter = REGISTRA) = TRUE : CCVD;
+						TRUE: CCVDant;
+					 esac;
+
+--====================================================== ECM =======================================================================
+
+MODULE ECM(CCOOS, SSC, AS, DS, RSC, CCFS, CCVD, ClutchSwitch, BrakePedalSts, VehicleSpeed)
+
+VAR
+
+--======================================================VARIAVEIS_ECM=======================================================================
+	
+	estado_ECM: {Check, Off, Enabled, Deactivated, Active, Store1, Store2, Store3, Locked, Supersede};
+--variaveis de entrada
+	Sb: boolean;
+	fault: boolean;
+	anomalies: boolean;
+	ACTIVATION: boolean;
+	DEACTIVATION: boolean;
+	OVERRIDE: boolean;
+--variaveis internas
+	Vset: -1..200;
+	VSC: boolean;
+	Ci: boolean;	
+--variaveis de saida
+	CCL: boolean;
+	Vvehicle: -1..200;
+	
+--=========================================================TRANSICOES DO MODELO ECM=============================================================
+ASSIGN
+
+	init(estado_ECM):= Check;
+	
+--TRANSICOES DAS VARIAVEIS DE ENTRADA
+	next(DEACTIVATION):= case
+							BrakePedalSts | ClutchSwitch = TRUE : TRUE;
+							!(BrakePedalSts | ClutchSwitch) = TRUE : FALSE;	
+							TRUE: DEACTIVATION;
+						 esac;
+						 
+	next(OVERRIDE):= case
+						ClutchSwitch = TRUE : TRUE;
+						ClutchSwitch = FALSE : FALSE;
+						TRUE: OVERRIDE;
+					 esac;
+			
+	next(Sb):= case
+				CCOOS = TRUE : TRUE;
+				CCOOS = FALSE : FALSE;
+				TRUE: Sb;
+			   esac;
+		
+	next(fault):= case
+					CCFS = TRUE : TRUE;
+					CCFS = FALSE : FALSE;
+					TRUE: fault;
+				  esac;
+				  
+	next(anomalies):= case
+						CCVD = TRUE : TRUE;
+						CCVD = FALSE : FALSE;
+						TRUE: anomalies;
+					  esac;
+			   
+	next(ACTIVATION):= case
+					(AS | DS) = TRUE : TRUE;
+					!(AS | DS) = TRUE : FALSE;
+					TRUE: ACTIVATION;
+			   esac;
+			 
+--TRANSICOES DA MODELO ECM
+	next(estado_ECM):= case
+						(estado_ECM = Check) & (!Sb) = TRUE : Off;
+						(estado_ECM = Check) & (Sb) = TRUE : Enabled;
+						(estado_ECM = Off) & (Sb) & (!fault) : Enabled;
+						(estado_ECM = Off) & (Sb) & (fault) : Locked;
+						(estado_ECM = Enabled) & (!Sb) : Off;
+						(estado_ECM = Enabled) & (fault) : Locked;
+						(estado_ECM = Enabled) & (ACTIVATION) & (!DEACTIVATION) & (!anomalies) : Store1;
+						(estado_ECM = Supersede) & (ACTIVATION) & (!DEACTIVATION) & (!anomalies): Enabled;
+						(estado_ECM = Supersede) & (fault) : Locked;
+						(estado_ECM = Supersede) & (DEACTIVATION) : Deactivated;
+						(estado_ECM = Supersede) & (anomalies | !Sb) : Store1;
+						(estado_ECM = Supersede) & (!OVERRIDE) : Active;
+						(estado_ECM = Deactivated) & (fault) : Locked;
+						(estado_ECM = Deactivated) & (!DEACTIVATION) : Active;
+						(estado_ECM = Deactivated) & (ACTIVATION) & (!DEACTIVATION): Store1;
+						(estado_ECM = Deactivated) & (anomalies | !Sb): Enabled;
+						(estado_ECM = Active) & (DS) & (VSC): Store2;
+						(estado_ECM = Active) & (AS) & (VSC) : Store3;
+						(estado_ECM = Active) & (DEACTIVATION) : Deactivated;
+						(estado_ECM = Active) & (fault) : Locked;
+						(estado_ECM = Active) & (OVERRIDE) : Supersede;
+						(estado_ECM = Store1) = TRUE : Active;
+						(estado_ECM = Store2) & (DS) = TRUE : Active;
+						(estado_ECM = Store3) & (!AS)= TRUE : Active;
+						TRUE: estado_ECM;
+					esac;
+						
+--TRANSICOES DAS VARIAVEIS DE SAIDA
+	next(CCL):= case
+					(estado_ECM = Check) | (estado_ECM = Enabled) | (estado_ECM = Supersede) | (estado_ECM = Active) | (estado_ECM = Deactivated) = TRUE : TRUE;
+					(estado_ECM = Off) | (estado_ECM = Locked) = TRUE : FALSE;
+					TRUE: CCL;
+				esac;
+				
+	next(Vvehicle):= case
+						(estado_ECM = Active) = TRUE : Vset;
+						(estado_ECM = Off) | (estado_ECM = Enabled) | (estado_ECM = Locked) | (estado_ECM = Supersede) | (estado_ECM = Deactivated) | (estado_ECM = Active) = TRUE: VehicleSpeed;
+						TRUE: Vvehicle;
+					 esac;
+					 
+--TRANSICOES DAS VARIAVEIS INTERNAS
+	next(Ci):= case
+					(estado_ECM = Enabled) | (estado_ECM = Supersede) | (estado_ECM = Deactivated) | (estado_ECM = Active) = TRUE : TRUE;
+					(estado_ECM = Off) | (estado_ECM = Locked) = TRUE : FALSE;
+					TRUE: Ci;
+			   esac;
+			   
+	next(VSC):= case
+					(estado_ECM = Active) & (Vset>=35) & (DS) = TRUE : TRUE;
+					(estado_ECM = Active) & (Vset<=175) & (AS) = TRUE : TRUE;
+					(estado_ECM = Enabled) | (estado_ECM = Off) | (estado_ECM = Locked) | (estado_ECM = Supersede) | (estado_ECM = Deactivated) = TRUE : TRUE;
+					TRUE: VSC;
+				esac;
+
+	next(Vset):= case
+					(estado_ECM = Store1) = TRUE : VehicleSpeed;
+					(estado_ECM = Store2) & (!DS) = TRUE & Vset >= 5: (Vset - 5) mod 200;
+					(estado_ECM = Store3) & (!AS) = TRUE : (Vset + 5) mod 200;
+					TRUE: Vset;
+				 esac;
